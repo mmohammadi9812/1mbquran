@@ -5,4 +5,7 @@
 !.gitignore
 !quran.js
 !index.html
-!bz2.js
+!package.json
+!/bz2/
+!/bz2/*
+!*.pug

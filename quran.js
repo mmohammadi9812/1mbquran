@@ -1,74 +1,118 @@
-// Copyright 2022 Mohammad Mohamamdi. All rights reserved.
+// Copyright 2023 Mohammad Mohamamdi. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
 async function load() {
-    //e.ls = localStorage;
-    // const ls = localStorage, e = window;
-    let e = window;
-    e.ls = localStorage;
-    let $d;
-    if (!ls.getItem('json')) {
-        let e = await fetch("quran.json.bz2");
-        let b = await e.arrayBuffer();
-        const o = bz2.decompress(new Uint8Array(b));
-        $d = JSON.parse(new TextDecoder('utf-8').decode(o));
-        ls.setItem('json', JSON.stringify($d));
-    } else {
-        $d = JSON.parse(ls.getItem('json'));
+  let e = window, $d;
+  e.ls = localStorage;
+  if (!ls.getItem('json')) {
+    let e = await fetch("quran.json.bz2");
+    let b = await e.arrayBuffer();
+    const o = bz2.decompress(new Uint8Array(b));
+    $d = JSON.parse(new TextDecoder('utf-8').decode(o));
+    ls.setItem('json', JSON.stringify($d));
+  } else {
+    $d = JSON.parse(ls.getItem('json'));
+  }
+
+  const keys = $d.map($_ => Object.keys($_).at(0));
+  const jozs = keys.
+    reduce(
+      ($acc, $_) => {
+        let $n = /J(\d+)S(\d+)A(\d+)P(\d+)/.exec($_);
+        $acc.hasOwnProperty($n[1]) ? $acc[$n[1]].push([$n[2], $n[3], $n[4]]) : $acc[$n[1]] = [[$n[2], $n[3], $n[4]]];
+        return $acc
+      }, {});
+
+  window.joz = function (e) {
+    ls.setItem('joz', e);
+    r(e, '1')
+  };
+  window.sura = function (e) {
+    ls.setItem('sura', e);
+    r(ls.getItem('joz'), e)
+  };
+  window.page = function (e) {
+    ls.setItem('pageNo', e);
+    r(ls.getItem('joz'), ls.getItem('sura'), e)
+  }
+
+
+  // https://stackoverflow.com/a/58157015/8796253
+  const e2p = s => s.replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
+
+  // https://stackoverflow.com/a/9229821/8796253
+  function uniq_fast(a) {
+    var seen = {}, out = [], len = a.length, j = 0;
+    for (let i = 0; i < len; i++) {
+      const item = a[i];
+      if (seen[item] !== 1) {
+        seen[item] = 1;
+        out[j++] = item;
+      }
     }
+    return out;
+  }
 
-    const jozs = Object.keys($d).
-                  map($_ => $_.split(',')).
-                  reduce(
-                    ($acc, $_) => {
-                      $acc.hasOwnProperty($_[0]) ? $acc[$_[0]].add($_[1]) : $acc[$_[0]] = new Set([$_[1]]);
-                      return $acc
-                    }, {});
+  function r(j, s = null, p = null) {
+    const jozSelect = Object.keys(jozs).
+      map($_ => parseInt($_, 10)).
+      map($_ => `<option value="${$_}" ${j == $_ ? 'selected' : ''}>${$_}</option>`).
+      join('');
 
-    window.joz = function (e) {
-      console.log("joz function, e: ", e);
-      ls.setItem('joz', e);
-      r(e, 1)
-    };
-    window.sura = function (e) {
-      console.log("sura function, e: ", e);
-      ls.setItem('sura', e);
-      r(ls.getItem('joz'), e)
-    };
+    const suras = uniq_fast(jozs[j].map($_ => $_.at(0)));
+    s = suras.includes(s) ? s : suras[0];
 
+    const suraSelect = suras.
+      map($_ => parseInt($_, 10)).
+      map(($_, $i) => `<option value="${$_}" ${(s == $_ || s == ($i + 1)) ? 'selected' : ''}>${$_}</option>`).
+      join('');
+    let pages = uniq_fast(jozs[j].map($_ => $_.at(2)));
+    const pageSelect = pages.
+      map($_ => parseInt($_, 10)).
+      map(($_, $i) => `<option value="${$_}" ${(p == $_ || !p && $i == 0) ? 'selected' : ''}>${$_}</option>`).
+      join('');
 
-    function r(e, t = 1) {
-        e = parseInt(e);
-        t = parseInt(t);
-        // https://stackoverflow.com/a/58157015/8796253
-        const e2p = s => s.replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
-        let suraSelect = Array.from(jozs[(e).toString()]).
-                      map($_ => parseInt($_, 10)).
-                      map($_ => `<option value="${$_}" ${t == $_ ? 'selected' : ''}>${$_}</option>`).
-                      join('');
-        let jozSelect = Object.keys(jozs).
-                        map($_ => parseInt($_, 10)).
-                        map($_ => `<option value="${$_}" ${e == $_ ? 'selected' : ''}>${$_}</option>`).
-                        join('');
-        let text = Object.keys($d).
-                    filter($k => $k.startsWith(`${e},${t}`)).
-                    map($k => `<p dir="rtl"><span>${e2p($k.split(',').at(2))}</span> ${$d[$k]}</p>`).
-                    join('');
-
-        document.querySelector('body').innerHTML = `
+    pages = keys.
+      filter($k => $k.startsWith(`J${j}S${s}`)). // JXSY(.*)
+      map($_ => $d.filter($__ => $__.hasOwnProperty($_))). // [ {}, {}, ... ] => [ [{'JXSY.*':{}}], ... ]
+      flat(). // [ [{}], [{}], ... ] => [ {}, {}, ... ]
+      reduce(($acc, $o) => { // [{}, {}, ...] => {1: [{}], 2: [{}, {}, ...], ...} group by pages
+        const $k = Object.keys($o).at(0);
+        const $n = /J(\d+)S(\d+)A(\d+)P(\d+)/.exec($k).at(4);
+        ($acc[$n] = $acc[$n] || []).push($o);
+        return $acc;
+      }, {});
+    const page = p ? pages[p] : pages[Object.keys(pages).at(0)];
+    const text = page.
+      map($o => {
+        let $k = Object.keys($o).at(0);
+        let $n = /J(\d+)S(\d+)A(\d+)P(\d+)/.exec($k).at(3);
+        let $text = Object.values($o).at(0).a;
+        let $trans = Object.values($o).at(0).b;
+        return `
+                <p dir="rtl"><span>${e2p($n)}</span> ${$text}</p>
+                <p dir="rtl"><span>${e2p($n)}</span> ${$trans}</p><br />
+                `;
+      }).
+      join('');
+    document.querySelector('body').innerHTML = `
 <div dir="rtl">
 جزء <select onchange="joz(this.value)">${jozSelect}</select>
 </div>
 <div dir="rtl">
 سوره <select onchange="sura(this.value)">${suraSelect}</select>
 </div>
+<div dir="rtl">
+صفحه <select onchange="page(this.value)">${pageSelect}</select>
+</div>
+
 <div class="text">${text}</div>
 <p class="credits">Made by Mohammad</a></p>`
-    }
-    ls.setItem('joz', ls.getItem('joz') || 1);
-    ls.setItem('sura', ls.getItem('sura') || 1);
-    r(ls.getItem('joz'), ls.getItem('sura'))
+  }
+  ls.setItem('joz', ls.getItem('joz') || 1);
+  ls.setItem('sura', ls.getItem('sura') || 1);
+  r(ls.getItem('joz'), ls.getItem('sura'))
 }
 
 window.onload = load;
