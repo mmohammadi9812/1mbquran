@@ -36,11 +36,9 @@ $(DIST_DIR)/quran.json.bz2:
 
 $(DIST_DIR)/$(STYLE_MIN):
 	lessc style.less $(STYLE_OUT)
-	# install minify from https://github.com/tdewolff/minify
 	$(MINIFY) $(STYLE_OUT) -o $(DIST_DIR)/$(STYLE_MIN)
 
 $(DIST_DIR)/$(SCRIPT_MIN):
-	# install minify from https://github.com/tdewolff/minify
 	$(MINIFY) script.js -o $(DIST_DIR)/$(SCRIPT_MIN)
 
 $(DIST_DIR)/$(INDEX): $(DIST_DIR)/$(SCRIPT_MIN) $(DIST_DIR)/$(STYLE_MIN) $(DIST_DIR)/bz2 $(DIST_DIR)/quran.json.bz2
