@@ -3,11 +3,9 @@
 
 # But not these files...
 !.gitignore
-!quran.js
-!index.html
-!package.json
 !/bz2/
 !/bz2/*
-!*.pug
+!index.pug
+!script.js
 !style.less
 !makefile

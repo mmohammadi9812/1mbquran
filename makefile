@@ -10,38 +10,42 @@ STYLE_OUT := style.css
 STYLE_MIN := style.min.css
 
 MINIFY := minify
-ifndef $(shell command -v $(MINIFY) 2>/dev/null)
-  $(error "minify is not available in path, please install it from https://github.com/tdewolff/minify")
+ifeq (, $(shell which $(MINIFY)))
+	$(error "minify is not available in path, please install it from https://github.com/tdewolff/minify")
 endif
 
 PUG := pug
-ifndef $(shell command -v $(PUG) 2>/dev/null)
-  $(error "pug is not available in path, please install it from https://pugjs.org")
+ifeq (, $(shell which $(PUG)))
+	$(error "pug is not available in path, please install it from https://pugjs.org")
 endif
 
-.PHONY: all
+.PHONY: all rm
 all: $(DIST_DIR)/$(INDEX)
 
+rm:
+	rm -rf $(DIST_DIR)
+
 $(DIST_DIR):
-  mkdir -p $(DIST_DIR)
+	mkdir -p $(DIST_DIR)
 
 $(DIST_DIR)/bz2:
-  cp -r bz2 $(DIST_DIR)/bz2
+	cp -r bz2 $(DIST_DIR)/bz2
 
 $(DIST_DIR)/quran.json.bz2:
-  cp quran.json.bz2 $(DIST_DIR)/quran.json.bz2
+	cp quran.json.bz2 $(DIST_DIR)/quran.json.bz2
 
 $(DIST_DIR)/$(STYLE_MIN):
-  lessc style.less $(STYLE_OUT)
-  # install minify from https://github.com/tdewolff/minify
-  $(MINIFY) $(STYLE_OUT) -o $(DIST_DIR)/$(STYLE_MIN)
+	lessc style.less $(STYLE_OUT)
+	# install minify from https://github.com/tdewolff/minify
+	$(MINIFY) $(STYLE_OUT) -o $(DIST_DIR)/$(STYLE_MIN)
 
 $(DIST_DIR)/$(SCRIPT_MIN):
-  # install minify from https://github.com/tdewolff/minify
-  $(MINIFY) script.js -o $(DIST_DIR)/$(SCRIPT_MIN)
+	# install minify from https://github.com/tdewolff/minify
+	$(MINIFY) script.js -o $(DIST_DIR)/$(SCRIPT_MIN)
 
 $(DIST_DIR)/$(INDEX): $(DIST_DIR)/$(SCRIPT_MIN) $(DIST_DIR)/$(STYLE_MIN) $(DIST_DIR)/bz2 $(DIST_DIR)/quran.json.bz2
-  $(PUG) $(PUG_INDEX)
-  $(MINIFY) $(INDEX) -o $(DIST_DIR)/$(INDEX)
-  sed -i 's/.css/.min.css/g; s/script.js/script.min.js/g' $(DIST_DIR)/$(INDEX)
-  rm $(INDEX)
+	$(PUG) $(PUG_INDEX)
+	$(MINIFY) $(INDEX) -o $(DIST_DIR)/$(INDEX)
+	ex +%s/.css/.min.css/g -scwq $(DIST_DIR)/$(INDEX)
+	ex +%s/script.js/script.min.js/g -scwq $(DIST_DIR)/$(INDEX)
+	rm $(INDEX)
