@@ -9,3 +9,5 @@
 !/bz2/
 !/bz2/*
 !*.pug
+!style.less
+!makefile

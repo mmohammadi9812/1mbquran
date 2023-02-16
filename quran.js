@@ -24,17 +24,17 @@ async function load() {
         return $acc
       }, {});
 
-  window.joz = function (e) {
+  window.joz = (e) => {
     ls.setItem('joz', e);
-    r(e, '1')
+    loadText(e, '1')
   };
-  window.sura = function (e) {
+  window.sura = (e) => {
     ls.setItem('sura', e);
-    r(ls.getItem('joz'), e)
+    loadText(ls.getItem('joz'), e)
   };
-  window.page = function (e) {
+  window.page = (e) => {
     ls.setItem('pageNo', e);
-    r(ls.getItem('joz'), ls.getItem('sura'), e)
+    loadText(ls.getItem('joz'), ls.getItem('sura'), e)
   }
 
 
@@ -54,7 +54,7 @@ async function load() {
     return out;
   }
 
-  function r(j, s = null, p = null) {
+  function loadText(j, s = null, p = null) {
     const jozSelect = Object.keys(jozs).
       map($_ => parseInt($_, 10)).
       map($_ => `<option value="${$_}" ${j == $_ ? 'selected' : ''}>${$_}</option>`).
@@ -90,14 +90,11 @@ async function load() {
         let $n = /J(\d+)S(\d+)A(\d+)P(\d+)/.exec($k).at(3);
         let $text = Object.values($o).at(0).a;
         let $trans = Object.values($o).at(0).b;
-        return `
-                <p dir="rtl"><span>${e2p($n)}</span> ${$text}</p>
-                <p dir="rtl"><span>${e2p($n)}</span> ${$trans}</p><br />
-                `;
+        return `<p dir="rtl"><span>${e2p($n)}</span> ${$text}</p>
+<p dir="rtl"><span>${e2p($n)}</span> ${$trans}</p><br />`;
       }).
       join('');
-    document.querySelector('body').innerHTML = `
-<div dir="rtl">
+    document.querySelector('body').innerHTML = `<div dir="rtl">
 جزء <select onchange="joz(this.value)">${jozSelect}</select>
 </div>
 <div dir="rtl">
@@ -106,13 +103,12 @@ async function load() {
 <div dir="rtl">
 صفحه <select onchange="page(this.value)">${pageSelect}</select>
 </div>
-
 <div class="text">${text}</div>
 <p class="credits">Made by Mohammad</a></p>`
   }
   ls.setItem('joz', ls.getItem('joz') || 1);
   ls.setItem('sura', ls.getItem('sura') || 1);
-  r(ls.getItem('joz'), ls.getItem('sura'))
+  loadText(ls.getItem('joz'), ls.getItem('sura'))
 }
 
 window.onload = load;
